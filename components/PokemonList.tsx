@@ -1,4 +1,5 @@
-// import { useState } from "react"
+"use client"
+import { useState } from "react"
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,33 +11,18 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
-import { getPokemonList, getPokemonTypes, PokemonListResponse } from "@/lib/pokemon";
 import { PokemonDialog } from "@/components/PokemonDialog";
+import { PokemonListResponse } from "@/lib/pokemon";
 
-const getPokemonData = async (page: number = 1) => {
-  const pokemons = await getPokemonList(page);
-
-  const pkWithTypes = pokemons.results.map((pokemon) =>
-    getPokemonTypes(pokemon.name)
-  );
-  await Promise.all(pkWithTypes).then((types) => {
-    types.forEach((type, index) => {
-      pokemons.results[index].types = type;
-    });
-  });
-  return pokemons
-};
-
-export default async function PokemonList({searchParams = {}}: {searchParams?: { page?: string }}) {
-const page = searchParams.page === undefined? 1 : parseInt(searchParams.page) as number
-  const pokemonData = await getPokemonData(page);
-  // const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null)
+export default function PokemonList({pokemonData, page}: {pokemonData: PokemonListResponse, page: number}) {
+  
+  const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null)
 
   const totalPages = Math.ceil(pokemonData.count / 20);
 
-  // const handlePokemonClick = (pokemonName: string) => {
-  //   setSelectedPokemon(pokemonName)
-  // }
+  const handlePokemonClick = (pokemonName: string) => {
+    setSelectedPokemon(pokemonName)
+  }
 
   const getPageNumberRange = (page: number, totalPages: number) => {
     if (totalPages <= 5) {
@@ -63,8 +49,8 @@ const page = searchParams.page === undefined? 1 : parseInt(searchParams.page) as
         {pokemonData.results.map((pokemon) => (
           <div
             key={pokemon.name}
-            className="border rounded-lg py-4 px-2 hover:shadow-lg transition-shadow cursor-pointer"
-            // onClick={() => handlePokemonClick(pokemon.name)}
+            className="border-2 rounded-3xl py-6 hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => handlePokemonClick(pokemon.name)}
           >
             <Image
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${
@@ -76,7 +62,7 @@ const page = searchParams.page === undefined? 1 : parseInt(searchParams.page) as
               className="mx-auto"
             />
             <h2 className="text-center mt-2 capitalize">{pokemon.name}</h2>
-            <div className="flex justify-center gap-2 mt-2">
+            <div className="flex justify-center gap-4 mt-4">
               {pokemon.types.map((type) => (
                 <Badge
                   key={type}
@@ -93,13 +79,14 @@ const page = searchParams.page === undefined? 1 : parseInt(searchParams.page) as
         <PaginationContent>
           {page > 1 && (
             <PaginationItem>
-              <PaginationPrevious href={`/pokedex?page=${page - 1}`} />
+              <PaginationPrevious key={page - 1} href={`/pokedex?page=${page - 1}`} />
             </PaginationItem>
           )}
           <PaginationItem>
             {getPageNumberRange(page, totalPages).map((pageNumber) => (
               <PaginationLink
                 href={`/pokedex?page=${pageNumber}`}
+                key={pageNumber}
                 isActive={page === pageNumber ? true : false}
                 className={page === pageNumber ? "shadow-2xl" : ""}
               >
@@ -119,7 +106,7 @@ const page = searchParams.page === undefined? 1 : parseInt(searchParams.page) as
           )}
         </PaginationContent>
       </Pagination>
-      {/* <PokemonDialog pokemon={selectedPokemon} onClose={() => setSelectedPokemon(null)} /> */}
+      <PokemonDialog pokemonName={selectedPokemon} onClose={() => setSelectedPokemon(null)} />
     </div>
   );
 }

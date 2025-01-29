@@ -1,4 +1,4 @@
-import { Pokemon } from "@/types"
+import { Pokemon, PokemonSpecies, Type } from "@/types"
 import { cache } from "react"
 
 const API_BASE = "https://pokeapi.co/api/v2"
@@ -41,16 +41,18 @@ export const getPokemonDetails = cache(async (name: string) => {
     fetch(`${API_BASE}/pokemon-species/${name}`, { next: { revalidate: 604800 } }),
   ])
 
-  const [pokemon, species] = await Promise.all([pokemonResponse.json(), speciesResponse.json()])
+  const data = await Promise.all([pokemonResponse.json(), speciesResponse.json()])
+  const pokemon: Pokemon = data[0]
+  const species: PokemonSpecies = data[1]
 
   // Get type effectiveness
-  const typePromises = pokemon.types.map((type) =>
+  const typePromises: Promise<Type>[] = pokemon.types.map((type) =>
     fetch(type.type.url, { next: { revalidate: 604800 } }).then((res) => res.json()),
   )
   const typeDetails = await Promise.all(typePromises)
 
   // Calculate resistances and weaknesses
-  const effectiveness = new Map()
+  const effectiveness = new Map<string,number>()
   typeDetails.forEach((type) => {
     type.damage_relations.double_damage_from.forEach((t) =>
       effectiveness.set(t.name, (effectiveness.get(t.name) || 1) * 2),
@@ -60,9 +62,10 @@ export const getPokemonDetails = cache(async (name: string) => {
     )
     type.damage_relations.no_damage_from.forEach((t) => effectiveness.set(t.name, 0))
   })
+  console.log("Effectivenes: ",effectiveness)
 
-  const resistances = []
-  const weaknesses = []
+  const resistances: { type: string; multiplier: string }[]  = []
+  const weaknesses: { type: string; multiplier: string }[] = []
   effectiveness.forEach((multiplier, type) => {
     if (multiplier < 1) {
       resistances.push({ type, multiplier: multiplier === 0 ? "0" : "½×" })

@@ -1,14 +1,11 @@
 export default function PokedexLayout({
-  children,
-  pokemonlist,
+  children
 }: {
-  children: React.ReactNode;
-  pokemonlist: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <div>
       {children}
-      {pokemonlist}
     </div>
   );
 }
