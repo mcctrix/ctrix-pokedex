@@ -1,3 +1,4 @@
+import { Move } from './../types/Moves/moves';
 import { Pokemon, PokemonSpecies, Type } from "@/types"
 import { cache } from "react"
 
@@ -62,7 +63,6 @@ export const getPokemonDetails = cache(async (name: string) => {
     )
     type.damage_relations.no_damage_from.forEach((t) => effectiveness.set(t.name, 0))
   })
-  console.log("Effectivenes: ",effectiveness)
 
   const resistances: { type: string; multiplier: string }[]  = []
   const weaknesses: { type: string; multiplier: string }[] = []
@@ -75,7 +75,7 @@ export const getPokemonDetails = cache(async (name: string) => {
   })
 
   // Process moves
-  const movePromises = pokemon.moves.map((move) =>
+  const movePromises: Promise<Move>[] = pokemon.moves.map((move) =>
     fetch(move.move.url, { next: { revalidate: 604800 } }).then((res) => res.json()),
   )
   const moveDetails = await Promise.all(movePromises)
@@ -101,7 +101,7 @@ export const getPokemonDetails = cache(async (name: string) => {
     return {
       name: moveDetail.name,
       type: moveDetail.type.name,
-      category: moveDetail.damage_class.name.toUpperCase(),
+      category: moveDetail?.damage_class?.name.toUpperCase(),
       power: moveDetail.power,
       accuracy: moveDetail.accuracy,
       pp: moveDetail.pp,
