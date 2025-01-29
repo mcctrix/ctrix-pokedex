@@ -10,16 +10,26 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
-import { PokemonListResponse } from "@/lib/pokemon";
+import { getPokemonList, getPokemonTypes, PokemonListResponse } from "@/lib/pokemon";
 import { PokemonDialog } from "@/components/PokemonDialog";
 
-export default function PokemonList({
-  pokemonData,
-  page,
-}: {
-  pokemonData: PokemonListResponse;
-  page: number;
-}) {
+const getPokemonData = async (page: number = 1) => {
+  const pokemons = await getPokemonList(page);
+
+  const pkWithTypes = pokemons.results.map((pokemon) =>
+    getPokemonTypes(pokemon.name)
+  );
+  await Promise.all(pkWithTypes).then((types) => {
+    types.forEach((type, index) => {
+      pokemons.results[index].types = type;
+    });
+  });
+  return pokemons
+};
+
+export default async function PokemonList({searchParams = {}}: {searchParams?: { page?: string }}) {
+const page = searchParams.page === undefined? 1 : parseInt(searchParams.page) as number
+  const pokemonData = await getPokemonData(page);
   // const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null)
 
   const totalPages = Math.ceil(pokemonData.count / 20);
